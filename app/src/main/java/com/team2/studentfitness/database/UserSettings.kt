@@ -1,0 +1,34 @@
+package com.team2.studentfitness.database
+
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+//This table shows all user settings
+@Entity
+data class UserSettings (
+    @PrimaryKey //Can use the user ID as primary key
+    val uid: Int,
+    @ColumnInfo(name = "name")
+    val name: String,
+    @ColumnInfo(name = "notifsOn")
+    val notifsOn: Boolean,
+    @ColumnInfo(name = "theme", defaultValue = "0")
+    val theme: Int,
+    @ColumnInfo(name = "homeGym")
+    val homeGym: Int,
+    @ColumnInfo(name = "loginCount")
+    val loginCount: Int,
+    @ColumnInfo(name = "isMetric", defaultValue = "1")
+    val isMetric: Boolean = true,
+    @ColumnInfo(name = "sex", defaultValue = "MALE")
+    val sex: String = "MALE",
+    @ColumnInfo(name = "activityLevel", defaultValue = "SEDENTARY")
+    val activityLevel: String = "SEDENTARY",
+    @ColumnInfo(name = "macroDisplayStyle", defaultValue = "Bar")
+    val macroDisplayStyle: String = "Bar",
+    @ColumnInfo(name = "visibleMacros", defaultValue = "Protein,Carbs,Fat,Calories")
+    val visibleMacros: String = "Protein,Carbs,Fat,Calories",
+    @ColumnInfo(name = "workoutsPerWeekGoal", defaultValue = "3")
+    val workoutsPerWeekGoal: Int = 3
+)

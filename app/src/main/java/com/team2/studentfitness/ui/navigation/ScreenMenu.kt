@@ -1,0 +1,48 @@
+package com.team2.studentfitness.ui.navigation
+
+data class ScreenMenuItem(
+    val title: String,
+    val route: String
+)
+
+object AppRoutes {
+    const val Login = "login"
+    const val Onboarding = "onboarding"
+    const val Dashboard = "dashboard"
+    const val Settings = "settings"
+    const val DeveloperMenu = "dev-menu"
+    const val Workouts = "workouts"
+    const val BuildWorkout = "build-workout"
+    const val ExerciseSelection = "exercise-selection/{muscleGroup}"
+    const val ExerciseListTemplate = "exercises/{workoutId}/{workoutName}"
+    const val DetailTemplate = "detail/{feature}"
+    const val VideoDemo = "video-demo"
+    const val OfficialYouTubeDemo = "official-youtube-demo"
+    const val Macros = "macros"
+    const val WeightProgress = "weight-progress"
+
+    fun exercises(workoutId: Int, workoutName: String): String = "exercises/$workoutId/$workoutName"
+    fun exerciseSelection(muscleGroup: String): String = "exercise-selection/$muscleGroup"
+    fun detail(feature: String): String = "detail/$feature"
+}
+
+// Source of truth for the developer screen picker.
+val ScreenMenu = listOf(
+    ScreenMenuItem(title = "Login", route = AppRoutes.Login),
+    ScreenMenuItem(title = "Onboarding", route = AppRoutes.Onboarding),
+    ScreenMenuItem(title = "Dashboard", route = AppRoutes.Dashboard),
+    ScreenMenuItem(title = "Settings", route = AppRoutes.Settings),
+    ScreenMenuItem(title = "Video Demo", route = AppRoutes.VideoDemo),
+    ScreenMenuItem(title = "Official YouTube Demo", route = AppRoutes.OfficialYouTubeDemo),
+    ScreenMenuItem(title = "Workouts", route = AppRoutes.Workouts),
+    ScreenMenuItem(title = "Build Workout", route = AppRoutes.BuildWorkout),
+    ScreenMenuItem(title = "Macros", route = AppRoutes.Macros),
+    ScreenMenuItem(title = "Weight Progress", route = AppRoutes.WeightProgress),
+    ScreenMenuItem(title = "Detail: Heart Rate", route = AppRoutes.detail("Heart Rate")),
+    ScreenMenuItem(title = "Detail: Calories", route = AppRoutes.detail("Calories")),
+    ScreenMenuItem(title = "Detail: Gym Hours", route = AppRoutes.detail("Gym Hours")),
+    ScreenMenuItem(title = "Detail: Workout Timer", route = AppRoutes.detail("Workout Timer")),
+    ScreenMenuItem(title = "Detail: Protein Intake", route = AppRoutes.detail("Protein Intake")),
+    ScreenMenuItem(title = "Detail: Workout Tutorials", route = AppRoutes.detail("Workout Tutorials")),
+    ScreenMenuItem(title = "Detail: Mental Health", route = AppRoutes.detail("Mental Health"))
+)
