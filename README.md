@@ -1,38 +1,51 @@
-# team2-Student Fitness App
-Team 2's Project Repository
+# Scholar Strong Fitness App
 
 # Problem Statement 
-Everybody has issues fitting working out into their lives. As a student, it becomes an almost impossible task in more ways than one. There are issues such as scheduling and a lack of experience.
+Everybody has issues fitting working out into their lives. As a student, it becomes an almost 
+impossible task in more ways than one. There are issues such as scheduling and a lack of 
+experience.
 
 # Solution Statement 
-With student fitness, it will provide a data driven platform that will help handle students time management whilst also helping those who might feel intimidated with the gym. By syncing tutorial videos on different workouts / understanding the machine. This will give the student an idea what workout plan they want and provide the amount of time each work will take to fit in their schedule. But beyond tracking your physical fitness, our app will also provide the mental health tools, to provide the students with a holistic view of well-being (examples might include journaling mood tracking, and guides).
+With student fitness, it will provide a data-driven platform that will help handle students’
+time management whilst also helping those who might feel intimidated with the gym. By 
+syncing tutorial videos on different workouts / understanding the machine. This will give the 
+student an idea what workout plan they want and provide the amount of time each work 
+will take to fit in their schedule. But beyond tracking your physical fitness, our app will also 
+provide the mental health tools and food tracking, to provide the students with a holistic 
+view of well-being and how to also look for a well balance meal (examples might include 
+journaling, nutrition guides and ideas for health meals).
 
 
 # Mission Statement 
-Our app, Student Fitness (pending name), our mission is to redefine the college fitness experience by bridging the gap between physical exertion and mental resilience. 
-We believe that a student’s well-being isn't just measured by the weights they lift, but by the clarity and balance they maintain throughout their academic journey. 
-By providing a dual-purpose platform, we empower students to cultivate a sustainable lifestyle where body and mind are trained in tandem.
+Our app, Academic Strong (pending name), is to redefine the college fitness experience by 
+bridging the gap between physical exertion and health food balance. We believe that a 
+student’s well-being isn't just measured by the weights they lift, but by the clarity and 
+balance they maintain throughout their academic journey. By providing a dual-purpose 
+platform, we empower students to cultivate a sustainable lifestyle where body and mind 
+are trained in tandem.
 
-Our app serves as an introduction guide to the gym, stripping away the intimidation factor for beginners while offering robust tools for avid gym goers. 
-Looking beyond the weight room and cardio machines, Student Fitness (pending name) functions as a comprehensive mental health guide. Through an integrated mood tracking and a private journal, users can document their emotions alongside their physical milestones. 
-This creates a powerful visual history of growth, allowing students to see exactly how their activity influences their overall happiness and stress levels.
+Our app serves as an introduction guide to the gym, stripping away the intimidation factor 
+for beginners while offering robust tools for avid gym goers. Looking beyond the weight 
+room and cardio machines, Academic Strong (pending name) functions as a 
+comprehensive understanding on how to eat healthy and what it does to the mind. Through 
+an integrated digital tool used to log meals, drinks, and physical activity to monitor 
+nutritional intake and build awareness of daily eating habits. This creates a powerful visual 
+history of growth, allowing students to see exactly how their activity influences their overall 
+happiness and stress levels.
 
-Ultimately, we want this app to be more than a workout tracker.
-Our goal is to create something for the community that prioritizes self-care and awareness, ensuring that every user has the tools to check in on themselves as often as they check their personal best. 
-We believe that a stronger body and a healthier mind are the ultimate academic advantages.
+Ultimately, we want this app to be more than a workout tracker. Our goal is to create 
+something for the community that prioritizes self-care and awareness, ensuring that every 
+
+user has the tools to check in on themselves as often as they check their personal best. We 
+believe that a stronger body and a healthier mind are the ultimate academic advantages.
 
 
 ## Team Members
-* Grayson Jackson
-    * <https://github.com/GraysonJackson>
-* Jonathon Armstrong
-    * <https://github.com/cf0jonathan>
-* Lindsay Oldfield
-    * <https://github.com/leoldfield>
-* Michal Griff
-    * <https://github.com/michalgriff>
 * Alicia Johansen
     * <https://github.com/AJohansen-code>
+      
+* Lynn Brooks
+    * <https://github.com/LynnB1>
 
 
 ## Tech Stack
@@ -54,6 +67,3 @@ Databases: Firebase/SQLite
 2. Registered User: access to their own user settings and full access to application features
 3. Guest User: limited access to application features and limited user settings
 
-**Communication**  
-
-Daily communication will be maintained through Discord instant-messaging. Weekly meetings will be held on Tuesdays to update each team member's sprint progress. Bi-weekly stand-up meetings will be held in class on Mondays and Wednesdays for reporting to the client.
