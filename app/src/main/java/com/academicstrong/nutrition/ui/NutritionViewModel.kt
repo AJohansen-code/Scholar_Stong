@@ -9,60 +9,89 @@ import com.academicstrong.nutrition.ai.GeminiNutritionService
 import com.academicstrong.nutrition.ai.MealIdea
 import com.academicstrong.nutrition.ai.conflictsWith
 import com.academicstrong.nutrition.data.*
+import com.team2.studentfitness.DatabaseCreation
+import com.team2.studentfitness.database.HealthData
+import com.team2.studentfitness.database.MacroLog
+import com.team2.studentfitness.database.UserSettings
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 data class AiState(val busy: Boolean = false, val error: String? = null)
-private data class DayPoint(val mood: Int, val stress: Int, val calories: Int)
 
+/**
+ * NutriTrack's brain. Food entries go into the fitness app's MacroLog table, goals come from the
+ * fitness profile, and mood is read from the fitness app's MentalHealth log. Only diet labels,
+ * allergies and the pantry live in NutriTrack's own database.
+ */
 class NutritionViewModel(app: Application) : AndroidViewModel(app) {
 
     companion object { const val HISTORY_DAYS = 14 }
 
-    private val db = NutritionDatabase.get(app)
+    private val nutritionDb = NutritionDatabase.get(app)
+    private val fitnessDb = (app as DatabaseCreation).database
     private val gemini = GeminiNutritionService()
 
     val today: Long = LocalDate.now().toEpochDay()
     val firstDay: Long = today - (HISTORY_DAYS - 1)
     val selectedDay = MutableStateFlow(today)
 
-    val profile: StateFlow<NutritionProfile> = db.profile().observe()
+    val profile: StateFlow<NutritionProfile> = nutritionDb.profile().observe()
         .map { it ?: NutritionProfile() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, NutritionProfile())
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val dayEntries: StateFlow<List<FoodLogEntry>> = selectedDay
-        .flatMapLatest { db.foodLog().observeDay(it) }
+    val pantry: StateFlow<List<PantryItem>> = nutritionDb.pantry().observeAll()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    val history: StateFlow<List<FoodLogEntry>> = db.foodLog().observeRange(firstDay, today)
+    private val settings: StateFlow<UserSettings?> = fitnessDb.settingsDao().getLatestFlow()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    private val health = MutableStateFlow<HealthData?>(null)
+
+    /** Same goals the Macros screen shows. */
+    val goals: StateFlow<NutritionGoals> = combine(health, settings) { h, s -> computeGoals(h, s) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, computeGoals(null, null))
+
+    /** Every MacroLog entry, newest first. */
+    val allLogs: StateFlow<List<MacroLog>> = fitnessDb.macroLogDao().getAllFlow()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    val moods: StateFlow<List<MoodCheckIn>> = db.mood().observeRange(firstDay, today)
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val dayEntries: StateFlow<List<MacroLog>> = combine(allLogs, selectedDay) { logs, day ->
+        logs.filter { it.epochDay() == day }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    val pantry: StateFlow<List<PantryItem>> = db.pantry().observeAll()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    /** Average mood per day on a 1-4 scale, from the fitness app's emoji check-ins. */
+    val moodByDay = MutableStateFlow<Map<Long, Double>>(emptyMap())
 
     val ai = MutableStateFlow(AiState())
     val ideas = MutableStateFlow<List<MealIdea>>(emptyList())
     val skippedIdeas = MutableStateFlow(0)
     val insight = MutableStateFlow<String?>(null)
 
-    /** Plain-language link between eating and mood, computed on the device from the student's own data. */
-    val moodInsight: StateFlow<String?> = combine(history, moods, profile) { log, moods, p ->
-        val calsByDay = log.groupBy { it.epochDay }.mapValues { (_, v) -> v.sumOf { it.calories } }
-        val points = moods.mapNotNull { m -> calsByDay[m.epochDay]?.let { DayPoint(m.mood, m.stress, it) } }
+    val moodInsight: StateFlow<String?> = combine(allLogs, moodByDay, goals) { logs, moods, g ->
+        val calsByDay = logs.groupBy { it.epochDay() }.mapValues { (_, v) -> v.sumOf { it.calories } }
+        val points = moods.mapNotNull { (day, mood) -> calsByDay[day]?.let { mood to it } }
         if (points.size < 5) return@combine null
-        val (near, under) = points.partition { it.calories >= p.calorieGoal * 0.85 }
+        val (near, under) = points.partition { it.second >= g.calories * 0.85 }
         if (near.size < 2 || under.size < 2) return@combine null
-        fun avg(l: List<DayPoint>, f: (DayPoint) -> Int) = l.map(f).average()
-        "On days you ate close to your goal, your mood averaged %.1f and stress %.1f. On days well under it, mood averaged %.1f and stress %.1f. That is a pattern in your own data, not proof of cause."
-            .format(avg(near) { it.mood }, avg(near) { it.stress }, avg(under) { it.mood }, avg(under) { it.stress })
+        "On days you ate close to your goal, your mood averaged %.1f (scale 1-4). On days well under it, it averaged %.1f. That is a pattern in your own data, not proof of cause."
+            .format(near.map { it.first }.average(), under.map { it.first }.average())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    init {
+        viewModelScope.launch {
+            health.value = fitnessDb.healthDao().getLatest()
+            moodByDay.value = loadMoods()
+        }
+    }
+
+    private suspend fun loadMoods(): Map<Long, Double> {
+        val score = mapOf("😔" to 1, "😐" to 2, "🙂" to 3, "🤩" to 4)
+        return fitnessDb.mentalHealthDao().getAll()
+            .mapNotNull { m -> score[m.mood]?.let { epochDayOf(m.timestamp) to it } }
+            .groupBy({ it.first }, { it.second })
+            .mapValues { (_, v) -> v.average() }
+    }
 
     // ---------- day navigation ----------
     fun shiftDay(delta: Int) {
@@ -70,51 +99,54 @@ class NutritionViewModel(app: Application) : AndroidViewModel(app) {
         insight.value = null
     }
 
-    // ---------- logging ----------
-    fun addEntry(e: FoodLogEntry) = viewModelScope.launch { db.foodLog().insert(e.copy(epochDay = selectedDay.value)) }
-    fun deleteEntry(e: FoodLogEntry) = viewModelScope.launch { db.foodLog().delete(e) }
+    private fun stampForSelectedDay(): Long =
+        if (selectedDay.value == today) System.currentTimeMillis() else noonMillis(selectedDay.value)
+
+    // ---------- logging (writes to the fitness app's MacroLog) ----------
+    fun addEntry(log: MacroLog) = viewModelScope.launch {
+        fitnessDb.macroLogDao().insert(log.copy(timestamp = stampForSelectedDay()))
+    }
+
+    fun deleteEntry(log: MacroLog) = viewModelScope.launch { fitnessDb.macroLogDao().deleteById(log.id) }
 
     fun logFromText(description: String, onDone: () -> Unit) = runAi {
-        val foods = gemini.estimateFoods(description)
-        db.foodLog().insertAll(foods.map {
-            FoodLogEntry(
-                epochDay = selectedDay.value, mealType = it.mealType, name = it.name, calories = it.calories,
-                proteinG = it.proteinG, carbsG = it.carbsG, fatG = it.fatG, sugarG = it.sugarG,
-                caffeineMg = it.caffeineMg, volumeMl = it.volumeMl, isEstimate = true
+        val stamp = stampForSelectedDay()
+        gemini.estimateFoods(description).forEach { f ->
+            fitnessDb.macroLogDao().insert(
+                MacroLog(
+                    name = "${f.name} (est.)", calories = f.calories, protein = f.proteinG, carbs = f.carbsG,
+                    fat = f.fatG, fiber = f.fiberG, sugar = f.sugarG, sodium = f.sodiumMg, timestamp = stamp
+                )
             )
-        })
+        }
         onDone()
     }
 
-    fun saveMood(mood: Int, stress: Int) = viewModelScope.launch {
-        db.mood().upsert(MoodCheckIn(epochDay = selectedDay.value, mood = mood, stress = stress))
-    }
-
-    fun saveProfile(p: NutritionProfile) = viewModelScope.launch { db.profile().save(p.copy(id = 1)) }
+    fun saveProfile(p: NutritionProfile) = viewModelScope.launch { nutritionDb.profile().save(p.copy(id = 1)) }
 
     // ---------- pantry + meal ideas ----------
     fun addPantry(name: String) = viewModelScope.launch {
-        if (name.isNotBlank()) db.pantry().insert(PantryItem(name = name.trim()))
+        if (name.isNotBlank()) nutritionDb.pantry().insert(PantryItem(name = name.trim()))
     }
-    fun removePantry(item: PantryItem) = viewModelScope.launch { db.pantry().delete(item) }
+    fun removePantry(item: PantryItem) = viewModelScope.launch { nutritionDb.pantry().delete(item) }
 
     fun generateIdeas(type: MealType) = runAi {
-        val p = profile.value
+        val g = goals.value
         val t = dayEntries.value.totals()
         val all = gemini.suggestMeals(
-            p, pantry.value.map { it.name }, type, count = 3,
-            caloriesLeft = p.calorieGoal - t.calories, proteinLeftG = p.proteinGoalG - t.proteinG
+            profile.value, pantry.value.map { it.name }, type, count = 3,
+            caloriesLeft = g.calories - t.calories, proteinLeftG = g.proteinG - t.proteinG
         )
-        val safe = all.filterNot { it.conflictsWith(p) }
+        val safe = all.filterNot { it.conflictsWith(profile.value) }
         skippedIdeas.value = all.size - safe.size
         ideas.value = safe
     }
 
-    fun logIdea(idea: MealIdea, type: MealType) = viewModelScope.launch {
-        db.foodLog().insert(
-            FoodLogEntry(
-                epochDay = selectedDay.value, mealType = type, name = idea.name, calories = idea.calories,
-                proteinG = idea.proteinG, carbsG = idea.carbsG, fatG = idea.fatG, isEstimate = true
+    fun logIdea(idea: MealIdea) = viewModelScope.launch {
+        fitnessDb.macroLogDao().insert(
+            MacroLog(
+                name = "${idea.name} (est.)", calories = idea.calories, protein = idea.proteinG,
+                carbs = idea.carbsG, fat = idea.fatG, timestamp = stampForSelectedDay()
             )
         )
     }
@@ -122,14 +154,15 @@ class NutritionViewModel(app: Application) : AndroidViewModel(app) {
     // ---------- AI feedback ----------
     fun refreshInsight() = runAi {
         val p = profile.value
+        val g = goals.value
         val t = dayEntries.value.totals()
-        val calorieLine = if (p.showCalories) "Calories ${t.calories} of ${p.calorieGoal}. "
+        val calorieLine = if (p.showCalories) "Calories ${t.calories} of ${g.calories}. "
         else "The student hides calorie numbers, so do not mention calories. "
         insight.value = gemini.dailyInsight(
             calorieLine +
-                "Protein ${t.proteinG} of ${p.proteinGoalG} g. Carbs ${t.carbsG} of ${p.carbsGoalG} g. " +
-                "Fat ${t.fatG} of ${p.fatGoalG} g. Sugar ${t.sugarG} g. Caffeine ${t.caffeineMg} mg. " +
-                "Fluids ${t.fluidMl} of ${p.fluidGoalMl} ml. Logged: ${dayEntries.value.joinToString { it.name }}."
+                "Protein ${t.proteinG} of ${g.proteinG} g. Carbs ${t.carbsG} of ${g.carbsG} g. " +
+                "Fat ${t.fatG} of ${g.fatG} g. Fiber ${t.fiberG} of ${g.fiberG} g. " +
+                "Sugar ${t.sugarG} g. Sodium ${t.sodiumMg} mg. Logged: ${dayEntries.value.joinToString { it.name }}."
         )
     }
 

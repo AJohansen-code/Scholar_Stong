@@ -65,7 +65,7 @@ fun IdeasScreen(vm: NutritionViewModel) {
                     Text("${idea.minutes} min · $cal" + "P ${idea.proteinG}g · C ${idea.carbsG}g · F ${idea.fatG}g", style = MaterialTheme.typography.bodySmall)
                     Text(idea.ingredients.joinToString("\n") { "• $it" })
                     Text(idea.instructions)
-                    OutlinedButton(onClick = { vm.logIdea(idea, type) }) { Text("Log this to ${if (day == vm.today) "today" else "this day"}") }
+                    OutlinedButton(onClick = { vm.logIdea(idea) }) { Text("Log this to ${if (day == vm.today) "today" else "this day"}") }
                 }
             }
         }

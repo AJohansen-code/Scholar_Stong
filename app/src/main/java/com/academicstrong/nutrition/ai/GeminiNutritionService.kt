@@ -13,8 +13,8 @@ import org.json.JSONArray
 import java.io.IOException
 
 data class ParsedFood(
-    val name: String, val mealType: MealType, val calories: Int, val proteinG: Int,
-    val carbsG: Int, val fatG: Int, val sugarG: Int, val caffeineMg: Int, val volumeMl: Int
+    val name: String, val calories: Int, val proteinG: Int, val carbsG: Int, val fatG: Int,
+    val fiberG: Int, val sugarG: Int, val sodiumMg: Int
 )
 
 data class MealIdea(
@@ -48,19 +48,17 @@ class GeminiNutritionService {
     suspend fun estimateFoods(description: String): List<ParsedFood> {
         val prompt = """
             A college student describes what they ate or drank: "$description"
-            Split it into separate items and estimate nutrition for each. Use typical portion sizes when none are given.
-            Use DRINK as the mealType for beverages. volumeMl is only for drinks (0 for food).
-            These are estimates, so round to whole numbers.
+            Split it into separate items (foods and drinks) and estimate nutrition for each.
+            Use typical portion sizes when none are given.
+            Calories are kcal, sodiumMg is milligrams, everything else is grams. Round to whole numbers.
         """.trimIndent()
         val arr = JSONArray(askJson(prompt, Schema.array(foodSchema)))
         return (0 until arr.length()).map { i ->
             val o = arr.getJSONObject(i)
             ParsedFood(
-                name = o.getString("name"),
-                mealType = runCatching { MealType.valueOf(o.getString("mealType")) }.getOrDefault(MealType.SNACK),
-                calories = o.optInt("calories"), proteinG = o.optInt("proteinG"), carbsG = o.optInt("carbsG"),
-                fatG = o.optInt("fatG"), sugarG = o.optInt("sugarG"), caffeineMg = o.optInt("caffeineMg"),
-                volumeMl = o.optInt("volumeMl")
+                name = o.getString("name"), calories = o.optInt("calories"), proteinG = o.optInt("proteinG"),
+                carbsG = o.optInt("carbsG"), fatG = o.optInt("fatG"), fiberG = o.optInt("fiberG"),
+                sugarG = o.optInt("sugarG"), sodiumMg = o.optInt("sodiumMg")
             )
         }
     }
@@ -98,7 +96,7 @@ class GeminiNutritionService {
             """
             You are a supportive nutrition coach inside a student wellness app. Here is today's log versus the student's goals:
             $summary
-            Reply in 2-3 short, friendly sentences about balance (protein, fruit/veg, fluids, caffeine) and one easy next step.
+            Reply in 2-3 short, friendly sentences about balance (protein, fiber, fruit/veg, sugar, sodium) and one easy next step.
             Do not shame, do not suggest eating less than their goal, do not give medical advice, and do not mention weight.
             """.trimIndent()
         ).text.orEmpty()
@@ -132,11 +130,9 @@ class GeminiNutritionService {
     // The Firebase SDK treats every field as required unless listed in optionalProperties.
     private val foodSchema = Schema.obj(
         mapOf(
-            "name" to Schema.string(),
-            "mealType" to Schema.enumeration(MealType.values().map { it.name }),
-            "calories" to Schema.integer(), "proteinG" to Schema.integer(), "carbsG" to Schema.integer(),
-            "fatG" to Schema.integer(), "sugarG" to Schema.integer(), "caffeineMg" to Schema.integer(),
-            "volumeMl" to Schema.integer()
+            "name" to Schema.string(), "calories" to Schema.integer(), "proteinG" to Schema.integer(),
+            "carbsG" to Schema.integer(), "fatG" to Schema.integer(), "fiberG" to Schema.integer(),
+            "sugarG" to Schema.integer(), "sodiumMg" to Schema.integer()
         )
     )
 
