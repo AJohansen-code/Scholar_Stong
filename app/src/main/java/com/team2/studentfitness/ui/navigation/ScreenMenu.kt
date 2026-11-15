@@ -20,6 +20,7 @@ object AppRoutes {
     const val OfficialYouTubeDemo = "official-youtube-demo"
     const val Macros = "macros"
     const val WeightProgress = "weight-progress"
+    const val Nutrition = "nutrition"
 
     fun exercises(workoutId: Int, workoutName: String): String = "exercises/$workoutId/$workoutName"
     fun exerciseSelection(muscleGroup: String): String = "exercise-selection/$muscleGroup"
