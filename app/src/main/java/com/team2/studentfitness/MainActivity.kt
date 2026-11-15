@@ -26,6 +26,7 @@ import com.team2.studentfitness.viewmodels.OnboardingViewModel
 import com.team2.studentfitness.viewmodels.SecurePinManager
 import com.team2.studentfitness.viewmodels.WorkoutViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.academicstrong.nutrition.ui.NutritionHost
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -156,6 +157,9 @@ class MainActivity : ComponentActivity() {
                         ) { backStackEntry ->
                             val feature = backStackEntry.arguments?.getString("feature")
                             DetailScreen(navController = navController, feature = feature)
+                        }
+                        composable(AppRoutes.Nutrition) {
+                            NutritionHost()
                         }
                     }
                 }
