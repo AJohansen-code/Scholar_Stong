@@ -42,7 +42,7 @@ fun TodayScreen(vm: NutritionViewModel) {
                 )
                 TextButton(onClick = { vm.shiftDay(1) }, enabled = day < vm.today) { Text("›") }
                 Spacer(Modifier.weight(1f))
-                TextButton(onClick = { showPrefs = true }) { Text("Diet & allergies") }
+                TextButton(onClick = { showPrefs = true }) { Text("Diet & Allergies") }
             }
         }
         item {
@@ -57,10 +57,6 @@ fun TodayScreen(vm: NutritionViewModel) {
                         "Sugar ${totals.sugarG} / ${goals.sugarG} g · Sodium ${totals.sodiumMg} / ${goals.sodiumMg} mg",
                         style = MaterialTheme.typography.bodySmall
                     )
-                    Text(
-                        "Goals come from your profile (age, height, weight, activity), the same as the Macros screen.",
-                        style = MaterialTheme.typography.bodySmall
-                    )
                 }
             }
         }
@@ -70,17 +66,16 @@ fun TodayScreen(vm: NutritionViewModel) {
                     OutlinedTextField(
                         value = text, onValueChange = { text = it }, modifier = Modifier.fillMaxWidth(),
                         label = { Text("What did you eat or drink?") },
-                        placeholder = { Text("2 eggs, toast and a latte") }
+                        placeholder = { Text("2 eggs, toast, and a latte") }
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         Button(onClick = { vm.logFromText(text) { text = "" } }, enabled = text.isNotBlank() && !ai.busy) {
-                            Text("Estimate & log")
+                            Text("Estimate & Log")
                         }
-                        OutlinedButton(onClick = { showAdd = true }) { Text("Add manually") }
+                        OutlinedButton(onClick = { showAdd = true }) { Text("Add Manually") }
                         if (ai.busy) CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
                     }
                     ai.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-                    Text("Entries from Estimate & log are AI estimates and show up in your Macros screen too.", style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
