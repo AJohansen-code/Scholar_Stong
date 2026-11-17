@@ -147,7 +147,7 @@ class GeminiNutritionService {
 
     private companion object {
         // Verify this against the model list in the Firebase AI Logic docs before you ship.
-        const val MODEL = "gemini-3.5-flash"
+        const val MODEL = "gemini-3.8-flash"
     }
 }
 
