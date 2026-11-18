@@ -8,7 +8,7 @@ import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderF
 import com.google.firebase.initialize
 
 /**
- * Call once from your Application.onCreate():
+ * Call once from Application.onCreate():
  *   installAppCheck(this, BuildConfig.DEBUG)
  *
  * Debug builds use the debug provider: run the app once, copy the debug token from Logcat,
