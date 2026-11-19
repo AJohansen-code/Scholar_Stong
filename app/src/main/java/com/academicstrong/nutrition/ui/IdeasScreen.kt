@@ -1,6 +1,8 @@
 package com.academicstrong.nutrition.ui
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -11,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.academicstrong.nutrition.data.MealType
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IdeasScreen(vm: NutritionViewModel) {
     val pantry by vm.pantry.collectAsState()
@@ -22,6 +24,7 @@ fun IdeasScreen(vm: NutritionViewModel) {
     val day by vm.selectedDay.collectAsState()
     var item by remember { mutableStateOf("") }
     var type by remember { mutableStateOf(MealType.LUNCH) }
+    var asked by remember { mutableStateOf(false) }
 
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
@@ -32,7 +35,7 @@ fun IdeasScreen(vm: NutritionViewModel) {
                         OutlinedTextField(item, { item = it }, Modifier.weight(1f), singleLine = true, label = { Text("Add an item") })
                         Button(onClick = { vm.addPantry(item); item = "" }, enabled = item.isNotBlank()) { Text("Add") }
                     }
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         pantry.forEach { p ->
                             InputChip(selected = false, onClick = { vm.removePantry(p) }, label = { Text(p.name) },
                                 trailingIcon = { Icon(Icons.Default.Close, contentDescription = "Remove ${p.name}", Modifier.size(16.dp)) })
@@ -43,14 +46,20 @@ fun IdeasScreen(vm: NutritionViewModel) {
         }
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     listOf(MealType.BREAKFAST, MealType.LUNCH, MealType.DINNER, MealType.SNACK).forEach { t ->
                         FilterChip(selected = type == t, onClick = { type = t }, label = { Text(t.name.lowercase()) })
                     }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { vm.generateIdeas(type) }, enabled = !ai.busy) { Text("Get healthy ideas") }
-                    if (ai.busy) CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                    FilledTonalButton(onClick = { asked = true; vm.generateIdeas(type) }, enabled = !ai.busy) { Text("Get healthy ideas") }
+                    if (ai.busy) {
+                        CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                        Text("Thinking up ideas...", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                if (asked && !ai.busy && ai.error == null && ideas.isEmpty()) {
+                    Text("No ideas came back. Try again.", style = MaterialTheme.typography.bodySmall)
                 }
                 ai.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                 if (skipped > 0) Text("Hid $skipped idea(s) that matched an allergy you listed.", style = MaterialTheme.typography.bodySmall)
