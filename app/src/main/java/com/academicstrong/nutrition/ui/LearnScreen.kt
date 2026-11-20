@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 
 private data class Guide(val title: String, val body: String)
 
-// General, conservative guidance written for students. Have a dietitian or your instructor review before release.
+// General, conservative guidance written for students.
 private val guides = listOf(
     Guide("Build a balanced plate",
         "A simple starting point: fill about half your plate with vegetables or fruit, a quarter with a protein (eggs, beans, chicken, tofu, yogurt), and a quarter with whole grains or starchy carbs (oats, rice, whole-wheat bread). Add a little healthy fat like nuts, olive oil, or avocado."),

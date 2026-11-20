@@ -25,7 +25,7 @@ data class MealIdea(
 /**
  * Talks to Gemini through Firebase AI Logic (Gemini Developer API backend).
  * There is no API key in the app. Requests go through Firebase, which checks App Check first.
- * Call installAppCheck(...) from your Application class (see AppCheckSetup.kt).
+ * Call installAppCheck(...) from Application class (see AppCheckSetup.kt).
  * Check the Firebase docs for current model names and free-tier limits.
  */
 class GeminiNutritionService {
@@ -153,8 +153,6 @@ class GeminiNutritionService {
 
 /**
  * Safety net for the "100% certainty gluten/nut-free" persona in the NutriTrack README.
- * The model can slip, so ideas are also checked locally. This is a simple text match,
- * not a guarantee, and the UI says so.
  */
 fun MealIdea.conflictsWith(profile: NutritionProfile): Boolean {
     val terms = profile.allergies.split(",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }
